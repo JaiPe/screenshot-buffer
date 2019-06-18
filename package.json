@@ -1,0 +1,21 @@
+{
+  "name": "screenshot-buffer",
+  "version": "0.0.1",
+  "main": "lib/index.js",
+  "gypfile": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaipe/screenshot-buffer"
+  },
+  "dependencies": {
+    "node-addon-api": "^1.6.3",
+    "node-gyp": "^5.0.0"
+  },
+  "scripts": {
+    "install": "node ./install",
+    "rebuild": "node-gyp rebuild"
+  },
+  "devDependencies": {
+    "fs": "0.0.1-security"
+  }
+}
