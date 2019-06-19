@@ -5,7 +5,7 @@
   "gypfile": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/jaipe/screenshot-buffer"
+    "url": "https://github.com/RatherSlowTurtle/screenshot-buffer"
   },
   "dependencies": {
     "node-addon-api": "^1.6.3",
