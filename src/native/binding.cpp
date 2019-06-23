@@ -44,7 +44,7 @@ Object Capture(const CallbackInfo& info) {
 		throw Error::New(info.Env(), "Buffer storage failed.");
 	}
 	Object returnValue = Object::New(info.Env());
-	returnValue.Set("data", ArrayBuffer::New(info.Env(), buffer, bufferLen));
+	returnValue.Set("data", Buffer<CHAR>::New(info.Env(), buffer, bufferLen));
 	returnValue.Set("width", Number::New(info.Env(), targetWindowBounds.right - targetWindowBounds.left));
 	returnValue.Set("height", Number::New(info.Env(), targetWindowBounds.bottom - targetWindowBounds.top));
 
