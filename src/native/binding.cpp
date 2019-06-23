@@ -10,11 +10,15 @@ using namespace ScreenShot;
 using namespace Napi;
 using namespace std;
 
-Object Capture(const CallbackInfo& info) {
+Promise Capture(const CallbackInfo& info) {
 	string windowTitle = info[0].IsUndefined() ? "" : info[0].As<String>().Utf8Value();
+	Promise::Deferred deferred = Promise::Deferred::New(info.Env());
 
 	if (windowTitle == "") {
-		throw Error::New(info.Env(), "No process name given.");
+		deferred.Reject(
+			Napi::TypeError::New(info.Env(), "No process name given.").Value()
+		);
+		return deferred.Promise();
 	}
 
 	HWND windowHWND = FindProcessMainWindowByName(windowTitle.c_str());
@@ -22,7 +26,10 @@ Object Capture(const CallbackInfo& info) {
 	if (windowHWND == NULL) {
 		string exceptionMessage = "Could not find window for process name: ";
 		exceptionMessage += windowTitle;
-		throw Error::New(info.Env(), exceptionMessage);
+		deferred.Reject(
+			Napi::TypeError::New(info.Env(), exceptionMessage).Value()
+		);
+		return deferred.Promise();
 	}
 
 	Object options = info.Length() > 1 ? info[1].As<Object>() : Object::New(info.Env());
@@ -41,18 +48,23 @@ Object Capture(const CallbackInfo& info) {
 	const DWORD bufferLen = CaptureAsBuffer(buffer, targetWindowBounds, grayscale, quality);
 
 	if (bufferLen < 1) {
-		throw Error::New(info.Env(), "Buffer storage failed.");
+		deferred.Reject(
+			Napi::TypeError::New(info.Env(), "Buffer storage failed.").Value()
+		);
+		return deferred.Promise();
 	}
 	Object returnValue = Object::New(info.Env());
 	returnValue.Set("data", Buffer<CHAR>::New(info.Env(), buffer, bufferLen));
 	returnValue.Set("width", Number::New(info.Env(), targetWindowBounds.right - targetWindowBounds.left));
 	returnValue.Set("height", Number::New(info.Env(), targetWindowBounds.bottom - targetWindowBounds.top));
 
-	return returnValue;
+	deferred.Resolve(returnValue);
+
+	return deferred.Promise();
 }
 
 Object Init(Env env, Object exports) {
-	exports.Set("capture", Function::New(env, Capture));
+	exports.Set(Napi::String::New(env, "capture"), Function::New(env, Capture));
 
 	return exports;
 }
