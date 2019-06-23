@@ -23,16 +23,32 @@ npm i screenshot-buffer --save
 
 # Example
 
+```ts
+import * as windowSnap from 'screenshot-buffer';
+import { writeFileSync } from 'fs';
+
+(async () => {
+	try {
+		const { width, height, data } = await windowSnap.capture('notepad.exe', { bringToFront: true, grayscale: true, quality: 90 });
+		writeFileSync('grayscale-notepad.jpg', data);
+	} catch(e) {
+		console.error(e);
+	}
+})();
 ```
+
+```js
 const screenshot = require('screenshot-buffer');
 const { writeFileSync } = require('fs');
 
-try {
-	const bytes = screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true, quality: 90 });
-	writeFileSync('grayscale-notepad.jpg', Buffer.from(bytes));
-} catch(e) {
-	console.error(e);
-}
+(async () => {
+	try {
+		const bytes = await screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true, quality: 90 });
+		writeFileSync('grayscale-notepad.jpg', bytes);
+	} catch(e) {
+		console.error(e);
+	}
+})();
 ```
 
 # Notes
