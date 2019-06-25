@@ -6,5 +6,5 @@ if (os.platform() === 'win32') {
         stdio: 'inherit'
     });
 } else {
-	throw new Error('`screenshot-buffer` module is Windows only.');
+    throw new Error('`screenshot-buffer` module is Windows only.');
 }

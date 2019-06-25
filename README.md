@@ -29,17 +29,17 @@ import { writeFileSync } from 'fs';
 import { read } from 'jimp';
 
 (async () => {
-	try {
-		const { width, height, data } = await capture('notepad.exe', { bringToFront: true, grayscale: true, mime: MIME.PNG });
+    try {
+        const { width, height, data } = await capture('notepad.exe', { bringToFront: true, grayscale: true, mime: MIME.PNG });
 
         // Create Jimp instance from the buffer data
         const image = await read(data);
 
         // Write file directly
         writeFileSync('grayscale-notepad.jpg', bytes);
-	} catch(e) {
-		console.error(e);
-	}
+    } catch(e) {
+        console.error(e);
+    }
 })();
 ```
 
@@ -49,17 +49,17 @@ const { writeFileSync } = require('fs');
 const { read } = require('jimp');
 
 (async () => {
-	try {
-		const bytes = await screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true, mime: 'image/png' });
+    try {
+        const bytes = await screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true, mime: 'image/png' });
 
         // Create Jimp instance from the buffer data
         const image = await read(data);
 
         // Write file directly
         writeFileSync('grayscale-notepad.jpg', bytes);
-	} catch(e) {
-		console.error(e);
-	}
+    } catch(e) {
+        console.error(e);
+    }
 })();
 ```
 
