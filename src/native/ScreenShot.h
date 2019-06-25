@@ -19,32 +19,35 @@ namespace ScreenShot {
 		return rc;
 	}
 
-	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
-		UINT  num = 0;
-		UINT  size = 0;
+	int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
+	{
+		UINT num = 0;          // number of image encoders
+		UINT size = 0;         // size of the image encoder array in bytes
 
 		ImageCodecInfo* pImageCodecInfo = NULL;
 
 		GetImageEncodersSize(&num, &size);
 		if (size == 0)
-			return -1;
+			return -1;  // Failure
 
 		pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
 		if (pImageCodecInfo == NULL)
-			return -1;
+			return -1;  // Failure
 
 		GetImageEncoders(num, size, pImageCodecInfo);
+
 		for (UINT j = 0; j < num; ++j)
 		{
 			if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0)
 			{
 				*pClsid = pImageCodecInfo[j].Clsid;
 				free(pImageCodecInfo);
-				return j;
+				return j;  // Success
 			}
 		}
+
 		free(pImageCodecInfo);
-		return 0;
+		return -1;  // Failure
 	}
 
 	DWORD WriteToBuffer(IStream *pStream, char*& buffer) {
@@ -102,7 +105,14 @@ namespace ScreenShot {
 		return TRUE;
 	}
 
-	DWORD CaptureAsBuffer(char*& buffer, RECT targetWindowBounds, BOOL useGrayscale, ULONG quality) {
+	std::wstring StringToWString(const std::string& s)
+	{
+		std::wstring temp(s.length(), L' ');
+		std::copy(s.begin(), s.end(), temp.begin());
+		return temp;
+	}
+
+	DWORD CaptureAsBuffer(char*& buffer, RECT targetWindowBounds, BOOL useGrayscale, const std::string mime) {
 		using namespace Gdiplus;
 		IStream* istream;
 		HRESULT res = CreateStreamOnHGlobal(NULL, true, &istream);
@@ -130,11 +140,10 @@ namespace ScreenShot {
 
 			Gdiplus::Bitmap bitmap(membit, NULL);
 			
-			GetEncoderClsid(L"image/jpeg", &clsid);
+			GetEncoderClsid(StringToWString(mime).c_str(), &clsid);
 			CreateStreamOnHGlobal(NULL, TRUE, &istream);
 
-			EncoderParameters params = GetEncoderParams(quality);
-			bitmap.Save(istream, &clsid, &params);
+			bitmap.Save(istream, &clsid, NULL);
 			dwBufferSize = WriteToBuffer(istream, buffer);
 
 			DeleteObject(memdc);

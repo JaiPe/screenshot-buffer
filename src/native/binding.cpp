@@ -35,17 +35,29 @@ Promise Capture(const CallbackInfo& info) {
 	Object options = info.Length() > 1 ? info[1].As<Object>() : Object::New(info.Env());
 	BOOLEAN grayscale = options.Get("grayscale").IsUndefined() ? false : options.Get("grayscale").As<Boolean>() == true;
 	BOOLEAN bringToFront = options.Get("bringToFront").IsUndefined() ? true : options.Get("bringToFront").As<Boolean>() == true;
-	ULONG quality = options.Get("quality").IsUndefined() ? 100 : options.Get("quality").As<Number>().Uint32Value();
+	const string mime = options.Get("mime").IsUndefined() ? "image/jpeg" : options.Get("mime").As<String>().Utf8Value();
+
+	if (mime != "image/jpeg" && mime != "image/png" && mime != "image/tiff" && mime != "image/bmp" && mime != "image/gif") {
+		deferred.Reject(
+			Napi::TypeError::New(info.Env(), "Invalid mime type give.").Value()
+		);
+		return deferred.Promise();
+	}
 
 	if (bringToFront) {
-		SetForegroundWindow(windowHWND);
+		if (!SetForegroundWindow(windowHWND)) {
+			deferred.Reject(
+				Napi::TypeError::New(info.Env(), "Failed to bring process to front.").Value()
+			);
+			return deferred.Promise();
+		}
 
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 
 	RECT targetWindowBounds = GetWindowBounds(windowHWND);
 	CHAR* buffer;
-	const DWORD bufferLen = CaptureAsBuffer(buffer, targetWindowBounds, grayscale, quality);
+	const DWORD bufferLen = CaptureAsBuffer(buffer, targetWindowBounds, grayscale, mime);
 
 	if (bufferLen < 1) {
 		deferred.Reject(
