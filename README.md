@@ -19,18 +19,24 @@ npm i screenshot-buffer --save
 
 * `bringToFront: boolean = true` - bring the window to the front before taking a screenshot
 
-* `quality: number = 100` - quality of the JPEG buffer
+* `mime: string = "image/jpeg"` - mime type of the image (available from `MIME` enum export in Typescript)
 
 # Example
 
 ```ts
-import * as windowSnap from 'screenshot-buffer';
+import { capture, MIME } from 'screenshot-buffer';
 import { writeFileSync } from 'fs';
+import { read } from 'jimp';
 
 (async () => {
 	try {
-		const { width, height, data } = await windowSnap.capture('notepad.exe', { bringToFront: true, grayscale: true, quality: 90 });
-		writeFileSync('grayscale-notepad.jpg', data);
+		const { width, height, data } = await capture('notepad.exe', { bringToFront: true, grayscale: true, mime: MIME.PNG });
+
+        // Create Jimp instance from the buffer data
+        const image = await read(data);
+
+        // Write file directly
+        writeFileSync('grayscale-notepad.jpg', bytes);
 	} catch(e) {
 		console.error(e);
 	}
@@ -40,11 +46,17 @@ import { writeFileSync } from 'fs';
 ```js
 const screenshot = require('screenshot-buffer');
 const { writeFileSync } = require('fs');
+const { read } = require('jimp');
 
 (async () => {
 	try {
-		const bytes = await screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true, quality: 90 });
-		writeFileSync('grayscale-notepad.jpg', bytes);
+		const bytes = await screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true, mime: 'image/png' });
+
+        // Create Jimp instance from the buffer data
+        const image = await read(data);
+
+        // Write file directly
+        writeFileSync('grayscale-notepad.jpg', bytes);
 	} catch(e) {
 		console.error(e);
 	}
