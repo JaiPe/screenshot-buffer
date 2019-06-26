@@ -93,11 +93,10 @@ namespace ScreenShot {
 		for (int y = 0; y < bm.bmHeight; y++) {
 			for (int x = 0; x < stride; x++) {
 				int i = (x + y * stride) * bm.bmBitsPixel / 8;
-				BYTE gray = BYTE(0.1 * bits[i + 0] + 0.6 * bits[i + 1] + 0.3 * bits[i + 2]);
+				BYTE gray = BYTE(0.299 * bits[i + 0] + 0.587 * bits[i + 1] + 0.114 * bits[i + 2]);
 				bits[i + 0] = bits[i + 1] = bits[i + 2] = gray;
 			}
 		}
-
 		SetDIBits(hdc, hbitmap, 0, bm.bmHeight, bits, &bmi, DIB_RGB_COLORS);
 		ReleaseDC(HWND_DESKTOP, hdc);
 		delete[]bits;
