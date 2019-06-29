@@ -1,4 +1,4 @@
-export declare const enum MIME {
+export declare enum MIME {
     BMP = "image/bmp",
     JPEG = "image/jpeg",
     GIF = "image/gif",
@@ -6,12 +6,13 @@ export declare const enum MIME {
     PNG = "image/png"
 }
 
-export declare function capture(
-    filename: string,
-    options: {
-        bringToFront?: boolean;
-        grayscale?: boolean;
-        mime?: MIME;
-    }
-): Promise<{ width: number; height: number; data: Buffer }>;
+export declare type ScreenshotOptions = {
+    bringToFront?: boolean;
+    mime?: MIME;
+    grayscale?: boolean;
+};
 
+export declare function capture(
+    processName: string,
+    options?: ScreenshotOptions
+): Promise<{ width: number; height: number; data: Buffer }>;

@@ -10,6 +10,14 @@ using namespace ScreenShot;
 using namespace Napi;
 using namespace std;
 
+Object CreateImageData(Env env, Buffer<BYTE> buffer, INT width, INT height) {
+	Object returnValue = Object::New(env);
+	returnValue.Set("data", buffer);
+	returnValue.Set("width", Number::New(env, width));
+	returnValue.Set("height", Number::New(env, height));
+	return returnValue;
+}
+
 Promise Capture(const CallbackInfo& info) {
 	string windowTitle = info[0].IsUndefined() ? "" : info[0].As<String>().Utf8Value();
 	Promise::Deferred deferred = Promise::Deferred::New(info.Env());
@@ -35,7 +43,7 @@ Promise Capture(const CallbackInfo& info) {
 	Object options = info.Length() > 1 ? info[1].As<Object>() : Object::New(info.Env());
 	BOOLEAN grayscale = options.Get("grayscale").IsUndefined() ? false : options.Get("grayscale").As<Boolean>() == true;
 	BOOLEAN bringToFront = options.Get("bringToFront").IsUndefined() ? true : options.Get("bringToFront").As<Boolean>() == true;
-	const string mime = options.Get("mime").IsUndefined() ? "image/jpeg" : options.Get("mime").As<String>().Utf8Value();
+	const string mime = options.Get("mime").IsUndefined() ? "image/png" : options.Get("mime").As<String>().Utf8Value();
 
 	if (mime != "image/jpeg" && mime != "image/png" && mime != "image/tiff" && mime != "image/bmp" && mime != "image/gif") {
 		deferred.Reject(
@@ -56,8 +64,8 @@ Promise Capture(const CallbackInfo& info) {
 	}
 
 	RECT targetWindowBounds = GetWindowBounds(windowHWND);
-	CHAR* buffer;
-	const DWORD bufferLen = CaptureAsBuffer(buffer, targetWindowBounds, grayscale, mime);
+	BYTE* buffer;
+	const DWORD bufferLen = GetScreenshotBuffer(buffer, targetWindowBounds, grayscale, mime);
 
 	if (bufferLen < 1) {
 		deferred.Reject(
@@ -65,18 +73,22 @@ Promise Capture(const CallbackInfo& info) {
 		);
 		return deferred.Promise();
 	}
-	Object returnValue = Object::New(info.Env());
-	returnValue.Set("data", Buffer<CHAR>::New(info.Env(), buffer, bufferLen));
-	returnValue.Set("width", Number::New(info.Env(), targetWindowBounds.right - targetWindowBounds.left));
-	returnValue.Set("height", Number::New(info.Env(), targetWindowBounds.bottom - targetWindowBounds.top));
 
-	deferred.Resolve(returnValue);
+	Buffer<BYTE> byteBuffer = Buffer<BYTE>::New(info.Env(), buffer, bufferLen);
+
+	deferred.Resolve(
+		CreateImageData(info.Env(), byteBuffer, targetWindowBounds.right - targetWindowBounds.left, targetWindowBounds.bottom - targetWindowBounds.top)
+	);
 
 	return deferred.Promise();
 }
 
+Promise CaptureAsImageData(const CallbackInfo& info) {
+	return Capture(info);
+}
+
 Object Init(Env env, Object exports) {
-	exports.Set(Napi::String::New(env, "capture"), Function::New(env, Capture));
+	exports.Set(Napi::String::New(env, "capture"), Function::New(env, CaptureAsImageData));
 
 	return exports;
 }

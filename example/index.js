@@ -3,8 +3,9 @@ const { writeFileSync } = require('fs');
 
 (async () => {
     try {
-        const bytes = await screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true, mime: 'image/jpeg' });
-        writeFileSync('grayscale-notepad.jpg', bytes);
+        const { data, width, height } = await screenshot.capture('notepad.exe', { bringToFront: true, grayscale: true });
+
+        writeFileSync('grayscale-notepad.png', data);
     } catch(e) {
         console.error(e);
     }

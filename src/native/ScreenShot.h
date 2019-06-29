@@ -1,16 +1,6 @@
 using namespace Gdiplus;
 
 namespace ScreenShot {
-	EncoderParameters GetEncoderParams(ULONG& quality) {
-		EncoderParameters encoderParameters;
-		encoderParameters.Count = 1;
-		encoderParameters.Parameter[0].Guid = EncoderQuality;
-		encoderParameters.Parameter[0].Type = EncoderParameterValueTypeLong;
-		encoderParameters.Parameter[0].NumberOfValues = 1;
-		encoderParameters.Parameter[0].Value = &quality;
-		return encoderParameters;
-	}
-
 	RECT GetWindowBounds(HWND hwnd) {
 		RECT rc;
 
@@ -50,29 +40,7 @@ namespace ScreenShot {
 		return -1;  // Failure
 	}
 
-	DWORD WriteToBuffer(IStream *pStream, char*& buffer) {
-		LARGE_INTEGER liZero = {};
-		ULARGE_INTEGER pos = {};
-		STATSTG stg = {};
-		DWORD bytesRead = 0;
-		HRESULT hrRet = S_OK;
-
-		DWORD dwBufferSize = 0;
-
-		hrRet = pStream->Seek(liZero, STREAM_SEEK_SET, &pos);
-		hrRet = pStream->Stat(&stg, STATFLAG_NONAME);
-
-		buffer = new char[stg.cbSize.LowPart];
-		hrRet = (buffer == NULL) ? E_OUTOFMEMORY : S_OK;
-		dwBufferSize = stg.cbSize.LowPart;
-
-		hrRet = pStream->Read(buffer, stg.cbSize.LowPart, &bytesRead);
-		pStream->Release();
-
-		return dwBufferSize;
-	}
-
-	BOOLEAN ConvertBitmapToGrayscale(HBITMAP hbitmap)
+	BOOLEAN ConvertBitmapToGrayscale(HBITMAP hbitmap, HDC hdc)
 	{
 		BITMAP bm;
 		GetObject(hbitmap, sizeof(bm), &bm);
@@ -81,11 +49,10 @@ namespace ScreenShot {
 			return FALSE;
 		}
 
-		HDC hdc = GetDC(HWND_DESKTOP);
 		DWORD size = ((bm.bmWidth * bm.bmBitsPixel + 31) / 32) * 4 * bm.bmHeight;
 
 		BITMAPINFO bmi
-		{ sizeof(BITMAPINFOHEADER),bm.bmWidth,bm.bmHeight,1,bm.bmBitsPixel,BI_RGB,size };
+		{ sizeof(BITMAPINFOHEADER), bm.bmWidth, bm.bmHeight, 1, bm.bmBitsPixel, BI_RGB, size };
 
 		int stride = bm.bmWidth + (bm.bmWidth * bm.bmBitsPixel / 8) % 4;
 		BYTE *bits = new BYTE[size];
@@ -98,11 +65,33 @@ namespace ScreenShot {
 			}
 		}
 		SetDIBits(hdc, hbitmap, 0, bm.bmHeight, bits, &bmi, DIB_RGB_COLORS);
-		ReleaseDC(HWND_DESKTOP, hdc);
 		delete[]bits;
 
 		return TRUE;
 	}
+
+	DWORD WriteImage(IStream *pStream, BYTE*& buffer) {
+		LARGE_INTEGER liZero = {};
+		ULARGE_INTEGER pos = {};
+		STATSTG stg = {};
+		DWORD bytesRead = 0;
+		HRESULT hrRet = S_OK;
+
+		DWORD dwBufferSize = 0;
+
+		hrRet = pStream->Seek(liZero, STREAM_SEEK_SET, &pos);
+		hrRet = pStream->Stat(&stg, STATFLAG_NONAME);
+
+		buffer = new BYTE[stg.cbSize.LowPart];
+		hrRet = (buffer == NULL) ? E_OUTOFMEMORY : S_OK;
+		dwBufferSize = stg.cbSize.LowPart;
+
+		hrRet = pStream->Read(buffer, stg.cbSize.LowPart, &bytesRead);
+		pStream->Release();
+
+		return dwBufferSize;
+	}
+
 
 	std::wstring StringToWString(const std::string& s)
 	{
@@ -111,7 +100,7 @@ namespace ScreenShot {
 		return temp;
 	}
 
-	DWORD CaptureAsBuffer(char*& buffer, RECT targetWindowBounds, BOOL useGrayscale, const std::string mime) {
+	DWORD GetScreenshotBuffer(BYTE*& buffer, RECT targetWindowBounds, BOOL useGrayscale, const std::string mime) {
 		using namespace Gdiplus;
 		IStream* istream;
 		HRESULT res = CreateStreamOnHGlobal(NULL, true, &istream);
@@ -124,8 +113,6 @@ namespace ScreenShot {
 			HBITMAP membit;
 			scrdc = ::GetDC(0);
 			CLSID clsid;
-			int Height = GetSystemMetrics(SM_CYSCREEN);
-			int Width = GetSystemMetrics(SM_CXSCREEN);
 			memdc = CreateCompatibleDC(scrdc);
 			membit = CreateCompatibleBitmap(scrdc, targetWindowBounds.right - targetWindowBounds.left,
 				targetWindowBounds.bottom - targetWindowBounds.top);
@@ -133,17 +120,18 @@ namespace ScreenShot {
 			BitBlt(memdc, 0, 0, targetWindowBounds.right - targetWindowBounds.left,
 				targetWindowBounds.bottom - targetWindowBounds.top, scrdc, targetWindowBounds.left, targetWindowBounds.top, SRCCOPY);
 
-			if (useGrayscale && !ConvertBitmapToGrayscale(membit)) {
+			if (useGrayscale && !ConvertBitmapToGrayscale(membit, scrdc)) {
 				return 0;
 			}
 
 			Gdiplus::Bitmap bitmap(membit, NULL);
-			
+		
 			GetEncoderClsid(StringToWString(mime).c_str(), &clsid);
 			CreateStreamOnHGlobal(NULL, TRUE, &istream);
 
 			bitmap.Save(istream, &clsid, NULL);
-			dwBufferSize = WriteToBuffer(istream, buffer);
+			dwBufferSize = WriteImage(istream, buffer);
+			
 
 			DeleteObject(memdc);
 			DeleteObject(membit);
