@@ -12,7 +12,7 @@ using namespace std;
 
 Object CreateImageData(Env env, Buffer<BYTE> buffer, INT width, INT height) {
 	Object returnValue = Object::New(env);
-	returnValue.Set("data", buffer);
+	returnValue.Set("buffer", buffer);
 	returnValue.Set("width", Number::New(env, width));
 	returnValue.Set("height", Number::New(env, height));
 	return returnValue;

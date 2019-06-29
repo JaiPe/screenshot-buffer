@@ -15,4 +15,4 @@ export declare type ScreenshotOptions = {
 export declare function capture(
     processName: string,
     options?: ScreenshotOptions
-): Promise<{ width: number; height: number; data: Buffer }>;
+): Promise<{ width: number; height: number; buffer: Buffer }>;
