@@ -63,6 +63,8 @@ Promise Capture(const CallbackInfo& info) {
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 
+	SetProcessDPIAware();
+	
 	RECT targetWindowBounds = GetWindowBounds(windowHWND);
 	BYTE* buffer;
 	const DWORD bufferLen = GetScreenshotBuffer(buffer, targetWindowBounds, grayscale, mime);

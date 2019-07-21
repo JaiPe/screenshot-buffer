@@ -19,6 +19,7 @@ BOOL IsWow64(HANDLE processHandle)
 	}
 	return bIsWow64;
 }
+
 DWORD GetProcessIdByName(const char* processName)
 {
 	PROCESSENTRY32 pe32;
@@ -58,7 +59,7 @@ BOOL IsMainWindow(HWND handle)
 	return GetWindow(handle, GW_OWNER) == (HWND)0 && IsWindowVisible(handle);
 }
 
-BOOL CALLBACK enum_windows_callback(HWND handle, LPARAM lParam)
+BOOL CALLBACK EnumWindowsCallback(HWND handle, LPARAM lParam)
 {
 	HandleData& data = *(HandleData*)lParam;
 	unsigned long processId = 0;
@@ -74,7 +75,7 @@ HWND FindMainWindowByProcessId(DWORD processId)
 	HandleData data;
 	data.processId = processId;
 	data.windowHandle = 0;
-	EnumWindows(enum_windows_callback, (LPARAM)&data);
+	EnumWindows(EnumWindowsCallback, (LPARAM)&data);
 	return data.windowHandle;
 }
 
