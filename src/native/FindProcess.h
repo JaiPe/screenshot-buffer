@@ -49,6 +49,16 @@ DWORD GetProcessIdByName(const char* processName)
 	return 0;
 }
 
+BOOL BringToFront(HWND windowHWND) {
+	SendMessage(windowHWND, WM_SYSCOMMAND, SC_RESTORE, 0);
+	
+	if (SetForegroundWindow(windowHWND)) {
+		return true;
+	}
+
+	return false;
+}
+
 struct HandleData {
 	unsigned long processId;
 	HWND windowHandle;

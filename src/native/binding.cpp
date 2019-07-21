@@ -53,7 +53,7 @@ Promise Capture(const CallbackInfo& info) {
 	}
 
 	if (bringToFront) {
-		if (!SetForegroundWindow(windowHWND)) {
+		if (!BringToFront(windowHWND)) {
 			deferred.Reject(
 				Napi::TypeError::New(info.Env(), "Failed to bring process to front.").Value()
 			);
@@ -63,7 +63,7 @@ Promise Capture(const CallbackInfo& info) {
 		this_thread::sleep_for(chrono::milliseconds(100));
 	}
 
-	SetProcessDPIAware();
+	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
 	
 	RECT targetWindowBounds = GetWindowBounds(windowHWND);
 	BYTE* buffer;
